@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chrono-Parcel: Ekspedisi Lintas Realitas</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #131a29;
+      --bg-card: rgba(20, 28, 45, 0.85);
+      --accent: #00f0ff;
+      --accent-glow: rgba(0, 240, 255, 0.35);
+      --accent-secondary: #9d4edd;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --danger: #ff4d6d;
+      --success: #00e676;
+      --warning: #ffd166;
+      --border: rgba(0, 240, 255, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      transition: background 0.8s ease;
+      position: relative;
+    }
+
+    /* Particle Canvas */
+    #particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Warp Transition Overlay */
+    #warp-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle, #ffffff 0%, var(--accent) 40%, #000000 100%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      transition: opacity 0.4s ease;
+    }
+
+    #warp-overlay.active {
+      opacity: 0.9;
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 95%;
+      max-width: 920px;
+      background: var(--bg-card);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 25px var(--accent-glow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 600px;
+    }
+
+    /* Top HUD */
+    .hud {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 22px;
+      background: rgba(10, 14, 23, 0.9);
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .hud-brand {
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* Main Stage */
+    .stage {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    /* Location Banner */
+    .location-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+    }
+
+    .location-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .location-era {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Visual Novel Scene */
+    .vn-scene {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 20px;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    @media (max-width: 640px) {
+      .vn-scene {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .portrait-box {
+        margin: 0 auto;
+      }
+    }
+
+    .portrait-box {
+      width: 150px;
+      height: 150px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(157,78,221,0.2));
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dialogue-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .speaker-name {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .dialogue-text {
+      font-size: 1.02rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      min-height: 75px;
+    }
+
+    .parcel-tag {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 10px;
+      background: rgba(157, 78, 221, 0.25);
+      border: 1px solid var(--accent-secondary);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #e0aaff;
+    }
+
+    /* Choices */
+    .choices-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .choice-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 13px 18px;
+      border-radius: 10px;
+      text-align: left;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .choice-btn:hover:not(:disabled) {
+      background: rgba(0, 240, 255, 0.14);
+      border-color: var(--accent);
+      transform: translateX(6px);
+    }
+
+    .choice-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .choice-meta {
+      font-size: 0.78rem;
+      color: var(--warning);
+      white-space: nowrap;
+    }
+
+    /* Workshop & Artifacts Modal / Screen */
+    .hub-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 680px) {
+      .hub-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .panel h3 {
+      font-size: 1rem;
+      color: var(--accent);
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 6px;
+    }
+
+    .shop-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.08);
+      gap: 10px;
+    }
+
+    .shop-item:last-child {
+      border-bottom: none;
+    }
+
+    .shop-info strong {
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .shop-info small {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #0096c7);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px var(--accent-glow);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .artifact-slots {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .artifact-slot {
+      aspect-ratio: 1;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      padding: 4px;
+      text-align: center;
+    }
+
+    .artifact-slot.unlocked {
+      border: 1px solid var(--accent);
+      background: rgba(0, 240, 255, 0.12);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .artifact-slot span {
+      font-size: 0.62rem;
+      margin-top: 4px;
+      color: var(--text-muted);
+    }
+
+    .title-screen {
+      text-align: center;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex: 1;
+    }
+
+    .title-screen h1 {
+      font-size: 2.3rem;
+      background: linear-gradient(90deg, #00f0ff, #c77dff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .title-screen p {
+      max-width: 580px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+  <div id="warp-overlay"></div>
+
+  <div class="container">
+    <!-- Top HUD -->
+    <div class="hud">
+      <div class="hud-brand">🌌 CHRONO-PARCEL</div>
+      <div class="hud-stats">
+        <div class="stat-pill" title="Shift Kerja">⏱️ Shift: <span id="stat-shift">1</span>/6</div>
+        <div class="stat-pill" title="Kredit Kuantum">💳 <span id="stat-credits">100</span> CR</div>
+        <div class="stat-pill" title="Energi Chrono-Suit">⚡ <span id="stat-energy">100</span>%</div>
+        <div class="stat-pill" title="Stabilitas Garis Waktu">🌀 <span id="stat-stability">100</span>%</div>
+        <button class="btn-icon" id="btn-mute" title="Suara">🔊</button>
+      </div>
+    </div>
+
+    <!-- Dynamic Stage -->
+    <div class="stage" id="app-stage">
+      <!-- Content injected via JS -->
+    </div>
+  </div>
+
+  <script>
+    /* ================= AUDIO SYNTHESIZER (WEB AUDIO API) ================= */
+    const AudioEngine = {
+      ctx: null,
+      muted: false,
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      },
+      playTone(freq, type = 'sine', duration = 0.08, vol = 0.05) {
+        if (this.muted) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+      },
+      playBlip() {
+        this.playTone(520 + Math.random() * 140, 'triangle', 0.04, 0.025);
+      },
+      playWarp() {
+        if (this.muted) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.45);
+        gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.5);
+      },
+      playSuccess() {
+        this.playTone(587.33, 'sine', 0.12, 0.07);
+        setTimeout(() => this.playTone(880, 'sine', 0.2, 0.07), 110);
+      }
+    };
+
+    document.getElementById('btn-mute').addEventListener('click', (e) => {
+      AudioEngine.muted = !AudioEngine.muted;
+      e.target.textContent = AudioEngine.muted ? '🔇' : '🔊';
+    });
+
+    /* ================= PARTICLE BACKGROUND ================= */
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let particleColor = '#00f0ff';
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 65; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2 + 0.6,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6
+      });
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = particleColor;
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    /* ================= SVG PORTRAITS ================= */
+    const Portraits = {
+      dispatcher: `<svg viewBox="0 0 120 120" width="120" height="120">
+        <circle cx="60" cy="60" r="46" fill="#0f2942" stroke="#00f0ff" stroke-width="2"/>
+        <rect x="34" y="46" width="52" height="18" rx="9" fill="#00f0ff" opacity="0.85"/>
+        <circle cx="48" cy="55" r="3" fill="#0a0e17"/>
+        <circle cx="72" cy="55" r="3" fill="#0a0e17"/>
+        <path d="M46 78 Q60 88 74 78" stroke="#00f0ff" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M25 32 L40 20 L80 20 L95 32" stroke="#9d4edd" stroke-width="4" fill="none"/>
+      </svg>`,
+      cyber: `<svg viewBox="0 0 120 120" width="120" height="120">
+        <polygon points="60,12 102,42 90,98 30,98 18,42" fill="#1e1b4b" stroke="#f72585" stroke-width="2.5"/>
+        <rect x="32" y="45" width="56" height="14" fill="#f72585"/>
+        <line x1="36" y1="52" x2="84" y2="52" stroke="#fff" stroke-width="2"/>
+        <path d="M44 76 L76 76" stroke="#4cc9f0" stroke-width="3"/>
+      </svg>`,
+      steampunk: `<svg viewBox="0 0 120 120" width="120" height="120">
+        <circle cx="60" cy="64" r="40" fill="#3d2616" stroke="#f59e0b" stroke-width="2.5"/>
+        <path d="M24 38 L96 38 L84 18 L36 18 Z" fill="#78350f" stroke="#f59e0b" stroke-width="2"/>
+        <circle cx="46" cy="58" r="11" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
+        <circle cx="74" cy="58" r="11" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
+        <line x1="57" y1="58" x2="63" y2="58" stroke="#fbbf24" stroke-width="3"/>
+        <path d="M48 82 Q60 76 72 82" stroke="#fbbf24" stroke-width="2.5" fill="none"/>
+      </svg>`,
+      dream: `<svg viewBox="0 0 120 120" width="120" height="120">
+        <circle cx="60" cy="60" r="44" fill="#2e1065" stroke="#c084fc" stroke-width="2"/>
+        <path d="M42 54 Q48 46 54 54" stroke="#e9d5ff" stroke-width="3" fill="none"/>
+        <path d="M66 54 Q72 46 78 54" stroke="#e9d5ff" stroke-width="3" fill="none"/>
+        <circle cx="60" cy="74" r="5" fill="#c084fc"/>
+        <circle cx="30" cy="30" r="4" fill="#fde047"/>
+        <circle cx="92" cy="36" r="3" fill="#fde047"/>
+      </svg>`,
+      desert: `<svg viewBox="0 0 120 120" width="120" height="120">
+        <path d="M22 95 Q60 15 98 95 Z" fill="#713f12" stroke="#eab308" stroke-width="2.5"/>
+        <circle cx="60" cy="58" r="24" fill="#422006"/>
+        <circle cx="52" cy="55" r="3" fill="#fef08a"/>
+        <circle cx="68" cy="55" r="3" fill="#fef08a"/>
+        <path d="M52 68 L68 68" stroke="#eab308" stroke-width="2"/>
+      </svg>`,
+      librarian: `<svg viewBox="0 0 120 120" width="120" height="120">
+        <rect x="24" y="20" width="72" height="80" rx="16" fill="#064e3b" stroke="#34d399" stroke-width="2.5"/>
+        <circle cx="46" cy="52" r="8" fill="none" stroke="#6ee7b7" stroke-width="2.5"/>
+        <circle cx="74" cy="52" r="8" fill="none" stroke="#6ee7b7" stroke-width="2.5"/>
+        <line x1="54" y1="52" x2="66" y2="52" stroke="#6ee7b7" stroke-width="2"/>
+        <path d="M48 76 Q60 84 72 76" stroke="#34d399" stroke-width="2.5" fill="none"/>
+      </svg>`
+    };
+
+    /* ================= GAME DATA ================= */
+    const ARTIFACTS = [
+      { id: 'chip', icon: '💾', name: 'Chip Memori 2099' },
+      { id: 'gear', icon: '⚙️', name: 'Roda Gigi Surya' },
+      { id: 'orb', icon: '🔮', name: 'Kristal Mimpi' },
+      { id: 'scarab', icon: '🪲', name: 'Kompas Pasir' },
+      { id: 'quill', icon: '🪶', name: 'Pena Keabadian' }
+    ];
+
+    const MISSIONS = [
+      {
+        id: 'm1',
+        era: 'TAHUN 2099 // CYBER-METROPOLIS',
+        location: 'Neo-Jakarta Sektor 7',
+        bg: '#090d16',
+        accent: '#00f0ff',
+        speaker: 'Kaelen (Peretas Jalanan)',
+        portrait: 'cyber',
+        parcel: '📦 Paket: Ramen Instan Rasa Nostalgia (Suhu Terkunci)',
+        text: '"Akhirnya sampai juga! Hujan asam di luar hampir melelehkan drone-ku. Tapi tunggu... scanner-ku mendeteksi agen Korporasi Chronos melacak sinyal paket ini. Bagaimana cara kita serah terima?"',
+        choices: [
+          {
+            text: 'Gunakan jubah kamuflase kuantum dan serahkan lewat gang bawah tanah.',
+            meta: '-15 Energi | +60 CR | +Chip Memori',
+            effect: (state) => {
+              state.energy -= 15;
+              state.credits += 60;
+              state.artifacts.add('chip');
+              return 'Kamu menyelinap tanpa terdeteksi. Kaelen sangat terkesan dan memberimu bonus chip langka!';
+            }
+          },
+          {
+            text: 'Lempar paket langsung dari atas hover-bike dan langsung lompat dimensi!',
+            meta: '-5 Energi | +45 CR | -10 Stabilitas',
+            effect: (state) => {
+              state.energy -= 5;
+              state.credits += 45;
+              state.stability -= 10;
+              return 'Paket mendarat mulus di tangan Kaelen, meski ledakan portalmu membuat alarm kota berbunyi.';
+            }
+          }
+        ]
+      },
+      {
+        id: 'm2',
+        era: 'TAHUN 1350-AN // ALTERNATE TIMELINE',
+        location: 'Majapahit Steampunk — Pelabuhan Uap',
+        bg: '#1c1208',
+        accent: '#f59e0b',
+        speaker: 'Empu Gandring-X (Mekanik Keraton)',
+        portrait: 'steampunk',
+        parcel: '📦 Paket: Cetak Biru Mesin Uap Surya',
+        text: '"Selamat datang di dermaga kapal udara Nusantara, Kurir! Tungku inti kapal perang kami hampir padam. Apa kau membawa cetak biru dari masa depan yang kupesan?"',
+        choices: [
+          {
+            text: 'Serahkan cetak biru dan bantu kalibrasi katup tekanannya sebentar.',
+            meta: '-20 Energi | +75 CR | +Roda Gigi Surya',
+            effect: (state) => {
+              state.energy -= 20;
+              state.credits += 75;
+              state.artifacts.add('gear');
+              return 'Mesin uap raksasa kembali menderu! Empu menghadiahkanmu Roda Gigi Surya berlapis emas.';
+            }
+          },
+          {
+            text: 'Berikan paketnya saja dan minta tanda tangan digital di Holo-Pad.',
+            meta: '-10 Energi | +50 CR | +5 Stabilitas',
+            effect: (state) => {
+              state.energy -= 10;
+              state.credits += 50;
+              state.stability += 5;
+              return 'Prosedur standar selesai tanpa mencampuri sejarah terlalu jauh. Aman dan terkendali!';
+            }
+          }
+        ]
+      },
+      {
+        id: 'm3',
+        era: 'DIMENSI NON-LINEAR // SUBCONSCIOUS',
+        location: 'Alam Mimpi — Stasiun Awan',
+        bg: '#170b29',
+        accent: '#c084fc',
+        speaker: 'Lunaria (Penjaga Tidur)',
+        portrait: 'dream',
+        parcel: '📦 Paket: Botol Berisi Suara Hujan Masa Kecil',
+        text: '"Sstt... jangan bicara terlalu keras, nanti para pemimpi terbangun. Paket ini pesanan seorang penyair yang lupa cara tersenyum. Apa kau siap menukar sedikit ingatanmu sebagai ongkos portal?"',
+        choices: [
+          {
+            text: 'Bayar dengan kenangan kecil dan antarkan botol hingga ke pelukan penyair.',
+            meta: '-15 Energi | +65 CR | +Kristal Mimpi',
+            effect: (state) => {
+              state.energy -= 15;
+              state.credits += 65;
+              state.artifacts.add('orb');
+              return 'Penyair itu tersenyum dalam tidurnya. Lunaria memberimu Kristal Mimpi yang berpendar lembut.';
+            }
+          },
+          {
+            text: 'Gunakan stabilizer portal untuk memaksa keluar tanpa membayar tol mimpi.',
+            meta: '-10 Energi | +40 CR | -15 Stabilitas',
+            effect: (state) => {
+              state.energy -= 10;
+              state.credits += 40;
+              state.stability -= 15;
+              return 'Kamu berhasil keluar, namun retakan kecil muncul di langit Alam Mimpi.';
+            }
+          }
+        ]
+      },
+      {
+        id: 'm4',
+        era: 'TAHUN 2400 SM // PARADOKS PASIR',
+        location: 'Gurun Dinasti Kuno',
+        bg: '#1f1606',
+        accent: '#eab308',
+        speaker: 'Arsitek Imhotep-09',
+        portrait: 'desert',
+        parcel: '📦 Paket: Batu Penjuru Anti-Gravitasi',
+        text: '"Badai pasir kuantum sedang mendekat! Jika batu puncak piramida ini tidak dipasang sebelum gerhana, garis waktu ini akan runtuh menjadi debu."',
+        choices: [
+          {
+            text: 'Aktifkan pendorong Chrono-Suit untuk mengangkat batu ke puncak piramida.',
+            meta: '-25 Energi | +85 CR | +Kompas Pasir',
+            effect: (state) => {
+              state.energy -= 25;
+              state.credits += 85;
+              state.artifacts.add('scarab');
+              return 'Piramida bersinar memancarkan cahaya ke langit! Sang Arsitek memberimu Kompas Pasir abadi.';
+            }
+          },
+          {
+            text: 'Tinggalkan paket di tenda komando dan segera evakuasi.',
+            meta: '-10 Energi | +45 CR | -10 Stabilitas',
+            effect: (state) => {
+              state.energy -= 10;
+              state.credits += 45;
+              state.stability -= 10;
+              return 'Tugasmu sebagai kurir selesai, meski mereka harus bekerja keras memasangnya secara manual.';
+            }
+          }
+        ]
+      },
+      {
+        id: 'm5',
+        era: 'UJUNG WAKTU // NULL-SPACE',
+        location: 'Perpustakaan Keabadian',
+        bg: '#041f1a',
+        accent: '#34d399',
+        speaker: 'Archivist Vaelen',
+        portrait: 'librarian',
+        parcel: '📦 Paket: Buku dengan Halaman Kosong yang Menulis Dirinya Sendiri',
+        text: '"Setiap keputusan yang kau ambil di setiap dimensi tertulis di sini, Kurir. Sebelum shift akhirmu selesai, apakah kau ingin membaca bab terakhir tentang dirimu sendiri?"',
+        choices: [
+          {
+            text: 'Tutup bukunya tanpa membaca — masa depan sebaiknya tetap menjadi misteri.',
+            meta: '-10 Energi | +80 CR | +Pena Keabadian | +10 Stabilitas',
+            effect: (state) => {
+              state.energy -= 10;
+              state.credits += 80;
+              state.stability += 10;
+              state.artifacts.add('quill');
+              return 'Archivist tersenyum bangga. Kebijaksanaanmu menjaga keutuhan semesta dan memberimu Pena Keabadian.';
+            }
+          },
+          {
+            text: 'Intip sedikit halaman terakhir demi mencari bocoran lotre kuantum.',
+            meta: '-5 Energi | +110 CR | -20 Stabilitas',
+            effect: (state) => {
+              state.energy -= 5;
+              state.credits += 110;
+              state.stability -= 20;
+              return 'Kamu mendapat angka keberuntungan, tapi paradoks pengetahuan membuat ruangan bergetar hebat!';
+            }
+          }
+        ]
+      }
+    ];
+
+    /* ================= GAME STATE ================= */
+    const GameState = {
+      shift: 1,
+      maxShifts: 6,
+      credits: 100,
+      energy: 100,
+      stability: 100,
+      maxEnergy: 100,
+      artifacts: new Set(),
+      missionPool: [],
+      upgrades: {
+        battery: false,
+        stabilizer: false
+      }
+    };
+
+    const stage = document.getElementById('app-stage');
+
+    function updateHUD() {
+      GameState.energy = Math.max(0, Math.min(GameState.maxEnergy, GameState.energy));
+      GameState.stability = Math.max(0, Math.min(100, GameState.stability));
+      document.getElementById('stat-shift').textContent = Math.min(GameState.shift, GameState.maxShifts);
+      document.getElementById('stat-credits').textContent = GameState.credits;
+      document.getElementById('stat-energy').textContent = GameState.energy;
+      document.getElementById('stat-stability').textContent = GameState.stability;
+    }
+
+    function setTheme(bg, accent) {
+      document.documentElement.style.setProperty('--bg-primary', bg);
+      document.documentElement.style.setProperty('--accent', accent);
+      particleColor = accent;
+    }
+
+    function triggerWarp(callback) {
+      AudioEngine.playWarp();
+      const overlay = document.getElementById('warp-overlay');
+      overlay.classList.add('active');
+      setTimeout(() => {
+        callback();
+        overlay.classList.remove('active');
+      }, 420);
+    }
+
+    function typeText(element, text, speed = 18) {
+      element.textContent = '';
+      let i = 0;
+      const timer = setInterval(() => {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          if (i % 3 === 0) AudioEngine.playBlip();
+          i++;
+        } else {
+          clearInterval(timer);
+        }
+      }, speed);
+    }
+
+    /* ================= SCREENS ================= */
+    function renderTitleScreen() {
+      setTheme('#0a0e17', '#00f0ff');
+      updateHUD();
+      stage.innerHTML = `
+        <div class="title-screen">
+          <div style="font-size: 3.5rem;">📦⏳</div>
+          <h1>CHRONO-PARCEL</h1>
+          <p>
+            Selamat datang di <strong>Chronos Logistics</strong>. Tugasmu sederhana: antarkan paket melintasi retakan waktu dan dimensi alternatif. 
+            Jaga energimu, beli peningkatan di Bengkel Kuantum, dan kumpulkan <strong>5 Artefak Lintas Dimensi</strong> sebelum shift-mu berakhir!
+          </p>
+          <button class="btn-primary" style="font-size: 1.05rem; padding: 14px 28px;" onclick="startGame()">
+            🚀 Mulai Shift Pertama
+          </button>
+        </div>
+      `;
+    }
+
+    function startGame() {
+      GameState.shift = 1;
+      GameState.credits = 100;
+      GameState.energy = 100;
+      GameState.maxEnergy = 100;
+      GameState.stability = 100;
+      GameState.artifacts.clear();
+      GameState.upgrades = { battery: false, stabilizer: false };
+      GameState.missionPool = [...MISSIONS];
+      updateHUD();
+      triggerWarp(() => startMission());
+    }
+
+    function startMission() {
+      if (GameState.energy <= 0 || GameState.stability <= 0) {
+        renderEnding('collapse');
+        return;
+      }
+      if (GameState.shift > GameState.maxShifts || GameState.missionPool.length === 0) {
+        if (GameState.artifacts.size >= 5) {
+          renderEnding('true');
+        } else {
+          renderEnding('normal');
+        }
+        return;
+      }
+
+      const mission = GameState.missionPool.shift();
+      setTheme(mission.bg, mission.accent);
+      updateHUD();
+
+      stage.innerHTML = `
+        <div class="location-header">
+          <div>
+            <div class="location-era">${mission.era}</div>
+            <div class="location-title">${mission.location}</div>
+          </div>
+          <div class="parcel-tag">${mission.parcel}</div>
+        </div>
+
+        <div class="vn-scene">
+          <div class="portrait-box">${Portraits[mission.portrait]}</div>
+          <div class="dialogue-box">
+            <div class="speaker-name">${mission.speaker}</div>
+            <div class="dialogue-text" id="dialogue-target"></div>
+          </div>
+        </div>
+
+        <div class="choices-grid" id="choices-target"></div>
+      `;
+
+      const dialogueEl = document.getElementById('dialogue-target');
+      typeText(dialogueEl, mission.text);
+
+      const choicesEl = document.getElementById('choices-target');
+      mission.choices.forEach((choice) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerHTML = `
+          <span>➤ ${choice.text}</span>
+          <span class="choice-meta">${choice.meta}</span>
+        `;
+        btn.onclick = () => resolveChoice(choice);
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function resolveChoice(choice) {
+      AudioEngine.playSuccess();
+      const outcomeText = choice.effect(GameState);
+      if (GameState.upgrades.stabilizer) {
+        GameState.stability = Math.min(100, GameState.stability + 5);
+      }
+      updateHUD();
+
+      if (GameState.energy <= 0 || GameState.stability <= 0) {
+        setTimeout(() => renderEnding('collapse'), 600);
+        return;
+      }
+
+      stage.innerHTML = `
+        <div class="location-header">
+          <div>
+            <div class="location-era">LAPORAN PENGIRIMAN</div>
+            <div class="location-title">Status Paket: Terkirim ✓</div>
+          </div>
+        </div>
+
+        <div class="vn-scene">
+          <div class="portrait-box">${Portraits.dispatcher}</div>
+          <div class="dialogue-box">
+            <div class="speaker-name">A.I. Dispatcher — VERA</div>
+            <div class="dialogue-text" id="outcome-target"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content: flex-end;">
+          <button class="btn-primary" onclick="openHub()">
+            🛠️ Kembali ke Bengkel Kuantum
+          </button>
+        </div>
+      `;
+
+      typeText(document.getElementById('outcome-target'), outcomeText);
+    }
+
+    function openHub() {
+      setTheme('#0a0e17', '#00f0ff');
+      GameState.shift++;
+      updateHUD();
+
+      if (GameState.shift > GameState.maxShifts || GameState.missionPool.length === 0) {
+        renderEnding(GameState.artifacts.size >= 5 ? 'true' : 'normal');
+        return;
+      }
+
+      const artifactsHTML = ARTIFACTS.map(a => {
+        const unlocked = GameState.artifacts.has(a.id);
+        return `
+          <div class="artifact-slot ${unlocked ? 'unlocked' : ''}" title="${a.name}">
+            <div>${unlocked ? a.icon : '❓'}</div>
+            <span>${unlocked ? a.name : 'Terkunci'}</span>
+          </div>
+        `;
+      }).join('');
+
+      stage.innerHTML = `
+        <div class="location-header">
+          <div>
+            <div class="location-era">MARKAS BESAR CHRONOS LOGISTICS</div>
+            <div class="location-title">Bengkel Kuantum & Rak Artefak</div>
+          </div>
+          <div class="parcel-tag">Artefak: ${GameState.artifacts.size} / 5</div>
+        </div>
+
+        <div class="hub-grid">
+          <div class="panel">
+            <h3>⚡ Pemulihan & Upgrade</h3>
+            <div class="shop-item">
+              <div class="shop-info">
+                <strong>Kapsul Espresso Kuantum</strong>
+                <small>Pulihkan +35% Energi Suit</small>
+              </div>
+              <button class="btn-primary" ${GameState.credits < 30 || GameState.energy >= GameState.maxEnergy ? 'disabled' : ''} onclick="buyItem('energy')">
+                30 CR
+              </button>
+            </div>
+
+            <div class="shop-item">
+              <div class="shop-info">
+                <strong>Penambal Paradoks</strong>
+                <small>Pulihkan +25% Stabilitas Realitas</small>
+              </div>
+              <button class="btn-primary" ${GameState.credits < 35 || GameState.stability >= 100 ? 'disabled' : ''} onclick="buyItem('stability')">
+                35 CR
+              </button>
+            </div>
+
+            <div class="shop-item">
+              <div class="shop-info">
+                <strong>Baterai Inti Super (Permanen)</strong>
+                <small>Kapasitas Energi Maksimal jadi 130%</small>
+              </div>
+              <button class="btn-primary" ${GameState.credits < 75 || GameState.upgrades.battery ? 'disabled' : ''} onclick="buyItem('battery')">
+                ${GameState.upgrades.battery ? 'Terpasang' : '75 CR'}
+              </button>
+            </div>
+
+            <div class="shop-item">
+              <div class="shop-info">
+                <strong>Jangkar Realitas (Permanen)</strong>
+                <small>+5% Stabilitas setiap selesai misi</small>
+              </div>
+              <button class="btn-primary" ${GameState.credits < 80 || GameState.upgrades.stabilizer ? 'disabled' : ''} onclick="buyItem('stabilizer')">
+                ${GameState.upgrades.stabilizer ? 'Terpasang' : '80 CR'}
+              </button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>🏛️ Koleksi Artefak Lintas Dimensi</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+              Kumpulkan seluruh 5 suvenir dari berbagai era untuk membuka <strong>True Ending</strong>!
+            </p>
+            <div class="artifact-slots">
+              ${artifactsHTML}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
+          <button class="btn-primary" onclick="triggerWarp(() => startMission())">
+            🌀 Lompat ke Dimensi Berikutnya (Shift ${GameState.shift})
+          </button>
+        </div>
+      `;
+    }
+
+    function buyItem(type) {
+      AudioEngine.playSuccess();
+      if (type === 'energy' && GameState.credits >= 30) {
+        GameState.credits -= 30;
+        GameState.energy += 35;
+      } else if (type === 'stability' && GameState.credits >= 35) {
+        GameState.credits -= 35;
+        GameState.stability += 25;
+      } else if (type === 'battery' && GameState.credits >= 75 && !GameState.upgrades.battery) {
+        GameState.credits -= 75;
+        GameState.upgrades.battery = true;
+        GameState.maxEnergy = 130;
+        GameState.energy = 130;
+      } else if (type === 'stabilizer' && GameState.credits >= 80 && !GameState.upgrades.stabilizer) {
+        GameState.credits -= 80;
+        GameState.upgrades.stabilizer = true;
+      }
+      GameState.shift--; // Keep current shift count when re-rendering hub
+      openHub();
+    }
+
+    function renderEnding(type) {
+      setTheme('#0a0e17', type === 'true' ? '#ffd166' : type === 'collapse' ? '#ff4d6d' : '#00f0ff');
+      updateHUD();
+
+      let title = '';
+      let icon = '';
+      let desc = '';
+
+      if (type === 'true') {
+        icon = '👑🌌';
+        title = 'TRUE ENDING: PENGUASA KRONOLOGI';
+        desc = `Luar biasa! Kamu berhasil menyelesaikan seluruh ekspedisi dengan ${GameState.credits} CR dan mengumpulkan kelima Artefak Lintas Dimensi. Chronos Logistics mengangkatmu menjadi Direktur Utama Ruang & Waktu!`;
+      } else if (type === 'collapse') {
+        icon = '💥🌀';
+        title = 'BAD ENDING: TERJEBAK DI CELAH WAKTU';
+        desc = `Energi atau stabilitas realitas menyentuh titik nol! Kamu terdampar di ruang hampa antara detik ke-59 dan ke-60. Jangan menyerah, coba atur ulang strategimu di shift berikutnya!`;
+      } else {
+        icon = '📦✨';
+        title = 'NORMAL ENDING: KURIR TELADAN';
+        desc = `Shift kerjamu selesai dengan selamat! Kamu mengumpulkan ${GameState.credits} CR dan ${GameState.artifacts.size}/5 Artefak. Coba kumpulkan semua 5 artefak pada percobaan berikutnya untuk membuka rahasia tertinggi semesta!`;
+      }
+
+      stage.innerHTML = `
+        <div class="title-screen">
+          <div style="font-size: 3.5rem;">${icon}</div>
+          <h1>${title}</h1>
+          <p>${desc}</p>
+          <button class="btn-primary" style="font-size: 1rem; padding: 12px 24px;" onclick="renderTitleScreen()">
+            🔄 Main Lagi
+          </button>
+        </div>
+      `;
+    }
+
+    // Boot
+    renderTitleScreen();
+  </script>
+</body>
+</html>
