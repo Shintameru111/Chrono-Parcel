@@ -39,7 +39,6 @@
       position: relative;
     }
 
-    /* Particle Canvas */
     #particles {
       position: fixed;
       top: 0;
@@ -50,7 +49,6 @@
       pointer-events: none;
     }
 
-    /* Warp Transition Overlay */
     #warp-overlay {
       position: fixed;
       inset: 0;
@@ -106,7 +104,7 @@
 
     .hud-stats {
       display: flex;
-      gap: 16px;
+      gap: 12px;
       flex-wrap: wrap;
       align-items: center;
     }
@@ -127,7 +125,7 @@
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
       color: var(--text-main);
-      padding: 6px 10px;
+      padding: 6px 11px;
       border-radius: 8px;
       cursor: pointer;
       font-size: 0.85rem;
@@ -149,13 +147,14 @@
       gap: 20px;
     }
 
-    /* Location Banner */
     .location-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-left: 4px solid var(--accent);
       padding-left: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .location-title {
@@ -228,7 +227,6 @@
 
     .parcel-tag {
       display: inline-block;
-      margin-top: 6px;
       padding: 4px 10px;
       background: rgba(157, 78, 221, 0.25);
       border: 1px solid var(--accent-secondary);
@@ -277,7 +275,7 @@
       white-space: nowrap;
     }
 
-    /* Workshop & Artifacts Modal / Screen */
+    /* Workshop & Artifacts */
     .hub-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -349,6 +347,22 @@
       cursor: not-allowed;
     }
 
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-main);
+      font-weight: 600;
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent);
+    }
+
     .artifact-slots {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -405,11 +419,118 @@
       color: var(--text-muted);
       line-height: 1.6;
     }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    /* Modal Panduan Kurir */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 15, 0.82);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #111827;
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 30px var(--accent-glow);
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 10px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    .guide-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--text-main);
+    }
+
+    .guide-list li {
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .guide-list strong {
+      color: var(--warning);
+    }
   </style>
 </head>
 <body>
   <canvas id="particles"></canvas>
   <div id="warp-overlay"></div>
+
+  <!-- Modal Panduan Kurir -->
+  <div class="modal-backdrop" id="guide-modal" onclick="if(event.target === this) toggleGuide(false)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>📖 Buku Saku & Panduan Kurir Chronos</h2>
+        <button class="btn-icon" onclick="toggleGuide(false)">✕</button>
+      </div>
+      <ul class="guide-list">
+        <li>
+          <strong>1. Misi Utama Ekspedisi:</strong><br/>
+          Antarkan paket melintasi 5 dimensi dan era berbeda. Setiap pilihan dialog menentukan hasil upah, energi, dan kelangsungan garis waktu.
+        </li>
+        <li>
+          <strong>2. Kelola Tiga Statistik Vital:</strong><br/>
+          • <strong>⚡ Energi Suit:</strong> Berkurang tiap kali melakukan aksi berisiko. Jika menyentuh <strong>0%</strong>, kamu akan terdampar.<br/>
+          • <strong>🌀 Stabilitas Realitas:</strong> Menjaga keutuhan sejarah. Tindakan gegabah menurunkan stabilitas; jika mencapai <strong>0%</strong>, dimensi akan runtuh.<br/>
+          • <strong>💳 Kredit (CR):</strong> Upah pengiriman yang dipakai berbelanja di Bengkel Kuantum.
+        </li>
+        <li>
+          <strong>3. Bengkel Kuantum & Upgrade:</strong><br/>
+          Di sela-sela shift, gunakan Kreditmu untuk memulihkan Energi, menambal Stabilitas, atau membeli peningkatan permanen seperti <em>Baterai Inti Super</em> dan <em>Jangkar Realitas</em>.
+        </li>
+        <li>
+          <strong>4. Cara Membuka True Ending:</strong><br/>
+          Pilih tindakan yang paling membantu klien di setiap dimensi untuk mendapatkan <strong>5 Artefak Lintas Dimensi</strong> (💾 ⚙️ 🔮 🪲 🪶). Kumpulkan kelimanya sebelum shift berakhir!
+        </li>
+      </ul>
+      <div style="display:flex; justify-content: flex-end; margin-top: 4px;">
+        <button class="btn-primary" onclick="toggleGuide(false)">Siap Bertugas!</button>
+      </div>
+    </div>
+  </div>
 
   <div class="container">
     <!-- Top HUD -->
@@ -420,6 +541,7 @@
         <div class="stat-pill" title="Kredit Kuantum">💳 <span id="stat-credits">100</span> CR</div>
         <div class="stat-pill" title="Energi Chrono-Suit">⚡ <span id="stat-energy">100</span>%</div>
         <div class="stat-pill" title="Stabilitas Garis Waktu">🌀 <span id="stat-stability">100</span>%</div>
+        <button class="btn-icon" onclick="toggleGuide(true)" title="Panduan Kurir">📖 Panduan</button>
         <button class="btn-icon" id="btn-mute" title="Suara">🔊</button>
       </div>
     </div>
@@ -431,7 +553,17 @@
   </div>
 
   <script>
-    /* ================= AUDIO SYNTHESIZER (WEB AUDIO API) ================= */
+    /* ================= MODAL GUIDE ================= */
+    function toggleGuide(show) {
+      const modal = document.getElementById('guide-modal');
+      if (show) {
+        modal.classList.add('open');
+      } else {
+        modal.classList.remove('open');
+      }
+    }
+
+    /* ================= AUDIO SYNTHESIZER ================= */
     const AudioEngine = {
       ctx: null,
       muted: false,
@@ -819,9 +951,14 @@
             Selamat datang di <strong>Chronos Logistics</strong>. Tugasmu sederhana: antarkan paket melintasi retakan waktu dan dimensi alternatif. 
             Jaga energimu, beli peningkatan di Bengkel Kuantum, dan kumpulkan <strong>5 Artefak Lintas Dimensi</strong> sebelum shift-mu berakhir!
           </p>
-          <button class="btn-primary" style="font-size: 1.05rem; padding: 14px 28px;" onclick="startGame()">
-            🚀 Mulai Shift Pertama
-          </button>
+          <div class="btn-group">
+            <button class="btn-primary" style="font-size: 1.05rem; padding: 14px 28px;" onclick="startGame()">
+              🚀 Mulai Shift Pertama
+            </button>
+            <button class="btn-secondary" style="font-size: 1.05rem; padding: 14px 24px;" onclick="toggleGuide(true)">
+              📖 Panduan Kurir
+            </button>
+          </div>
         </div>
       `;
     }
@@ -1041,7 +1178,7 @@
         GameState.credits -= 80;
         GameState.upgrades.stabilizer = true;
       }
-      GameState.shift--; // Keep current shift count when re-rendering hub
+      GameState.shift--;
       openHub();
     }
 
