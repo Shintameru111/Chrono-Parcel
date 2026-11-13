@@ -29,4 +29,4 @@ Game ini dirancang agar sangat ringan dan *standalone* (bisa berjalan hanya deng
 
 1. Clone repositori ini ke komputermu:
    ```bash
-   git clone [https://github.com/username-mu/chrono-parcel.git](https://github.com/username-mu/chrono-parcel.git)
+   git clone [https://github.com/Shintameru111/chrono-parcel.git](https://github.com/username-mu/chrono-parcel.git)
